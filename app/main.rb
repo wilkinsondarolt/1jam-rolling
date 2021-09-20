@@ -1,17 +1,20 @@
 require 'app/dice.rb'
 
-def tick(args)
-  args.state.round_state ||= :ongoing
+def start_game(args)
   args.state.dices ||= build_dices
-  args.state.score ||= 0
+  args.state.round_state = :ongoing
+  args.state.score = 0
+end
+
+def tick(args)
+  start_game(args) if args.state.dices.nil?
 
   draw_guidelines(args)
   draw_score(args)
   render(args)
   handle_mouse_input(args)
 
-  show_won_message(args) if args.state.round_state == :won
-  show_lost_message(args) if args.state.round_state == :lost
+  show_game_finished_message(args) if args.state.round_state != :ongoing
 
   finish_round(args) if round_ended?(args)
 end
@@ -59,15 +62,18 @@ end
 
 def handle_mouse_input(args)
   return unless args.inputs.mouse.click
-  return unless args.state.round_state == :ongoing
 
-  clicked_dice = args.state.dices.find do |dice|
-    args.inputs.mouse.click.intersect_rect?(dice.collision_box)
+  if args.state.round_state == :ongoing
+    clicked_dice = args.state.dices.find do |dice|
+      args.inputs.mouse.click.intersect_rect?(dice.collision_box)
+    end
+
+    return unless clicked_dice
+
+    args.state.score += clicked_dice.roll
+  else
+    start_game(args)
   end
-
-  return unless clicked_dice
-
-  args.state.score += clicked_dice.roll
 end
 
 def render(args)
@@ -83,6 +89,18 @@ end
 def finish_round(args)
   args.state.round_state = :lost if args.state.score >= MAX_SCORE
   args.state.round_state = :won if args.state.score == MAX_SCORE
+end
+
+def show_game_finished_message(args)
+  show_won_message(args) if args.state.round_state == :won
+  show_lost_message(args) if args.state.round_state == :lost
+
+  args.outputs.labels << {
+    x: args.grid.w / 2,
+    y: (args.grid.h / 2) - 80,
+    alignment_enum: 1,
+    text: 'Clique para jogar novamente.'
+  }
 end
 
 def show_won_message(args)
