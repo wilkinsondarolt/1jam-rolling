@@ -3,7 +3,7 @@ require 'app/dice.rb'
 STARTING_CREDITS = 200
 
 def start_game(args)
-  args.state.credits ||= STARTING_CREDITS
+  args.state.credits = STARTING_CREDITS
   args.state.dices ||= build_dices
   args.state.round_state = :idle
 
@@ -25,9 +25,15 @@ def tick(args)
   draw_dices(args)
   handle_mouse_input(args)
 
-  show_game_finished_message(args) if args.state.round_state != :ongoing
-
   check_round_completion(args)
+
+  return if args.state.round_state == :ongoing
+
+  if args.state.credits.zero?
+    show_game_finished_message(args)
+  else
+    show_round_finished_message(args)
+  end
 end
 
 def build_dices
@@ -91,6 +97,8 @@ def handle_mouse_input(args)
     return unless clicked_dice
 
     args.state.round_score += clicked_dice.roll
+  elsif args.state.credits.zero?
+    start_game(args)
   else
     start_round(args)
   end
@@ -112,6 +120,22 @@ def check_round_completion(args)
 end
 
 def show_game_finished_message(args)
+  args.outputs.labels << {
+    x: args.grid.w / 2,
+    y: (args.grid.h / 2) - 30,
+    alignment_enum: 1,
+    text: 'Você está sem créditos, que pena!'
+  }
+
+  args.outputs.labels << {
+    x: args.grid.w / 2,
+    y: (args.grid.h / 2) - 80,
+    alignment_enum: 1,
+    text: 'Clique para iniciar um novo jogo.'
+  }
+end
+
+def show_round_finished_message(args)
   show_won_message(args) if args.state.round_state == :won
   show_lost_message(args) if args.state.round_state == :lost
 
