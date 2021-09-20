@@ -1,22 +1,33 @@
 require 'app/dice.rb'
 
+STARTING_CREDITS = 200
+
 def start_game(args)
+  args.state.credits ||= STARTING_CREDITS
   args.state.dices ||= build_dices
+  args.state.round_state = :idle
+
+  start_round(args)
+end
+
+def start_round(args)
   args.state.round_state = :ongoing
-  args.state.score = 0
+  args.state.round_score = 0
+  args.state.credits -= 50
 end
 
 def tick(args)
   start_game(args) if args.state.dices.nil?
 
   draw_guidelines(args)
-  draw_score(args)
-  render(args)
+  draw_round_score(args)
+  draw_credits(args)
+  draw_dices(args)
   handle_mouse_input(args)
 
   show_game_finished_message(args) if args.state.round_state != :ongoing
 
-  finish_round(args) if round_ended?(args)
+  check_round_completion(args)
 end
 
 def build_dices
@@ -51,12 +62,21 @@ def draw_guidelines(args)
   }
 end
 
-def draw_score(args)
+def draw_round_score(args)
   args.outputs.labels << {
     x: args.grid.w / 2,
     y: (args.grid.h / 2) + 10,
     alignment_enum: 1,
-    text: args.state.score
+    text: args.state.round_score
+  }
+end
+
+def draw_credits(args)
+  args.outputs.labels << {
+    x: args.grid.w / 2,
+    y: args.grid.h - 10,
+    alignment_enum: 1,
+    text: "Créditos: #{args.state.credits}"
   }
 end
 
@@ -70,25 +90,25 @@ def handle_mouse_input(args)
 
     return unless clicked_dice
 
-    args.state.score += clicked_dice.roll
+    args.state.round_score += clicked_dice.roll
   else
-    start_game(args)
+    start_round(args)
   end
 end
 
-def render(args)
+def draw_dices(args)
   args.state.dices.each { |dice| dice.render(args) }
 end
 
 MAX_SCORE = 21
 
-def round_ended?(args)
-  args.state.score >= MAX_SCORE
-end
+def check_round_completion(args)
+  return unless args.state.round_state == :ongoing
 
-def finish_round(args)
-  args.state.round_state = :lost if args.state.score >= MAX_SCORE
-  args.state.round_state = :won if args.state.score == MAX_SCORE
+  args.state.round_state = :lost if args.state.round_score >= MAX_SCORE
+  args.state.round_state = :won if args.state.round_score == MAX_SCORE
+
+  args.state.credits += round_payout(args) if args.state.round_state != :ongoing
 end
 
 def show_game_finished_message(args)
@@ -108,7 +128,7 @@ def show_won_message(args)
     x: args.grid.w / 2,
     y: (args.grid.h / 2) - 50,
     alignment_enum: 1,
-    text: 'Blackjack! Você venceu!'
+    text: "Blackjack! Você ganhou #{round_payout(args)} créditos!"
   }
 end
 
@@ -119,4 +139,21 @@ def show_lost_message(args)
     alignment_enum: 1,
     text: 'Oops, passou de 21. Você perdeu.'
   }
+end
+
+def round_payout(args)
+  case args.state.round_score
+  when 0..17
+    0
+  when 18
+    50
+  when 19
+    100
+  when 20
+    150
+  when 21
+    200
+  else
+    0
+  end
 end
