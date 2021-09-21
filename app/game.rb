@@ -13,7 +13,7 @@ class Game
   end
 
   def start_round
-    @credits -= 50
+    @credits -= bet
     round.start
   end
 
@@ -21,6 +21,10 @@ class Game
     round.finish
 
     @credits += round.payout
+  end
+
+  def bet
+    50
   end
 
   def finished?

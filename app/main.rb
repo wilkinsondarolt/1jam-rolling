@@ -15,9 +15,8 @@ def tick(args)
 
   draw_debug_info(args)
   draw_round_score(args)
-  draw_credits(args)
   draw_buttons(args)
-  draw_current_payout(args)
+  draw_hud(args)
   handle_mouse_input(args)
 
   check_round_completion(args)
@@ -76,18 +75,32 @@ def draw_debug_info(args)
 
   args.outputs.debug << {
     x: 0,
-    y: args.grid.h - 50,
+    y: args.grid.h - 90,
     alignment_enum: 0,
     text: "Round Status: #{args.state.game.round.state}"
   }
+
+  args.outputs.labels << {
+    x: args.grid.w,
+    y: args.grid.h - 10,
+    alignment_enum: 2,
+    text: "Créditos: #{args.state.game.credits}"
+  }
 end
 
-def draw_current_payout(args)
+def draw_hud(args)
   args.outputs.labels << {
     x: 0,
     y: args.grid.h - 10,
     alignment_enum: 0,
-    text: "Pagamento atual: #{args.state.game.round.payout}"
+    text: "Pagamento: #{args.state.game.round.payout} créditos"
+  }
+
+  args.outputs.labels << {
+    x: 0,
+    y: args.grid.h - 50,
+    alignment_enum: 0,
+    text: "Aposta: #{args.state.game.bet} créditos"
   }
 end
 
@@ -97,15 +110,6 @@ def draw_round_score(args)
     y: (args.grid.h / 2) + 10,
     alignment_enum: 1,
     text: args.state.game.round.score
-  }
-end
-
-def draw_credits(args)
-  args.outputs.labels << {
-    x: args.grid.w,
-    y: args.grid.h - 10,
-    alignment_enum: 2,
-    text: "Créditos: #{args.state.game.credits}"
   }
 end
 
