@@ -1,58 +1,65 @@
+require 'app/button.rb'
 require 'app/dice.rb'
-
-STARTING_CREDITS = 200
+require 'app/game.rb'
+require 'app/round.rb'
 
 def start_game(args)
-  args.state.credits = STARTING_CREDITS
-  args.state.dices ||= build_dices
-  args.state.round_state = :idle
+  args.state.buttons ||= build_buttons(args)
+  args.state.game = Game.new
 
-  start_round(args)
-end
-
-def start_round(args)
-  args.state.round_state = :ongoing
-  args.state.round_score = 0
-  args.state.credits -= 50
+  args.state.game.start
 end
 
 def tick(args)
-  start_game(args) if args.state.dices.nil?
+  start_game(args) if args.state.game.nil?
 
-  draw_guidelines(args)
+  draw_debug_info(args)
   draw_round_score(args)
   draw_credits(args)
-  draw_dices(args)
+  draw_buttons(args)
+  draw_current_payout(args)
   handle_mouse_input(args)
 
   check_round_completion(args)
 
-  return if args.state.round_state == :ongoing
+  return if args.state.game.round.state == :ongoing
 
-  if args.state.credits.zero?
+  if args.state.game.credits.zero?
     show_game_finished_message(args)
   else
     show_round_finished_message(args)
   end
 end
 
-def build_dices
-  dices = []
+def build_buttons(args)
+  buttons = []
+  buttons << Button.new(
+    x: args.grid.w / 2 - 100,
+    y: args.grid.h / 2 - 100,
+    text: 'Parar',
+    on_click: proc { |state| state.game.finish_round },
+    visible: proc { |state| state.game.round.state == :ongoing }
+  )
+
   x = 60
   [4, 6, 8, 10, 12, 20].each do |faces|
-    dices << Dice.new(
+    buttons << Button.new(
       x: x,
       y: 30,
-      faces_count: faces
+      h: 100,
+      w: 100,
+      text: "d#{faces}",
+      on_click: proc { |state| state.game.round.roll_dice(faces) },
+      visible: proc { true }
     )
 
     x += 210
   end
 
-  dices
+  buttons
 end
 
-def draw_guidelines(args)
+def draw_debug_info(args)
   args.outputs.debug << {
     x: args.grid.w / 2,
     y: 0,
@@ -66,6 +73,22 @@ def draw_guidelines(args)
     x2: args.grid.w,
     y2: args.grid.h / 2
   }
+
+  args.outputs.debug << {
+    x: 0,
+    y: args.grid.h - 50,
+    alignment_enum: 0,
+    text: "Round Status: #{args.state.game.round.state}"
+  }
+end
+
+def draw_current_payout(args)
+  args.outputs.labels << {
+    x: 0,
+    y: args.grid.h - 10,
+    alignment_enum: 0,
+    text: "Pagamento atual: #{args.state.game.round.payout}"
+  }
 end
 
 def draw_round_score(args)
@@ -73,50 +96,43 @@ def draw_round_score(args)
     x: args.grid.w / 2,
     y: (args.grid.h / 2) + 10,
     alignment_enum: 1,
-    text: args.state.round_score
+    text: args.state.game.round.score
   }
 end
 
 def draw_credits(args)
   args.outputs.labels << {
-    x: args.grid.w / 2,
+    x: args.grid.w,
     y: args.grid.h - 10,
-    alignment_enum: 1,
-    text: "Créditos: #{args.state.credits}"
+    alignment_enum: 2,
+    text: "Créditos: #{args.state.game.credits}"
   }
 end
 
 def handle_mouse_input(args)
   return unless args.inputs.mouse.click
 
-  if args.state.round_state == :ongoing
-    clicked_dice = args.state.dices.find do |dice|
-      args.inputs.mouse.click.intersect_rect?(dice.collision_box)
+  if args.state.game.round.state == :ongoing
+    args.state.buttons.each do |button|
+      clicked = args.inputs.mouse.click.intersect_rect?(button.collision_box)
+
+      next unless clicked
+
+      button.click(args)
     end
-
-    return unless clicked_dice
-
-    args.state.round_score += clicked_dice.roll
-  elsif args.state.credits.zero?
+  elsif args.state.game.finished?
     start_game(args)
   else
-    start_round(args)
+    args.state.game.start_round
   end
 end
 
-def draw_dices(args)
-  args.state.dices.each { |dice| dice.render(args) }
+def draw_buttons(args)
+  args.state.buttons.each { |button| button.render(args) }
 end
 
-MAX_SCORE = 21
-
 def check_round_completion(args)
-  return unless args.state.round_state == :ongoing
-
-  args.state.round_state = :lost if args.state.round_score >= MAX_SCORE
-  args.state.round_state = :won if args.state.round_score == MAX_SCORE
-
-  args.state.credits += round_payout(args) if args.state.round_state != :ongoing
+  args.state.game.finish_round if args.state.game.round.auto_finish?
 end
 
 def show_game_finished_message(args)
@@ -136,23 +152,33 @@ def show_game_finished_message(args)
 end
 
 def show_round_finished_message(args)
-  show_won_message(args) if args.state.round_state == :won
-  show_lost_message(args) if args.state.round_state == :lost
+  show_finished_message(args) if args.state.game.round.state == :finished
+  show_blackjack_message(args) if args.state.game.round.state == :blackjack
+  show_lost_message(args) if args.state.game.round.state == :lost
 
   args.outputs.labels << {
     x: args.grid.w / 2,
     y: (args.grid.h / 2) - 80,
     alignment_enum: 1,
-    text: 'Clique para jogar novamente.'
+    text: 'Clique para jogar'
   }
 end
 
-def show_won_message(args)
+def show_finished_message(args)
   args.outputs.labels << {
     x: args.grid.w / 2,
     y: (args.grid.h / 2) - 50,
     alignment_enum: 1,
-    text: "Blackjack! Você ganhou #{round_payout(args)} créditos!"
+    text: "Você ganhou #{args.state.game.round.payout} créditos!"
+  }
+end
+
+def show_blackjack_message(args)
+  args.outputs.labels << {
+    x: args.grid.w / 2,
+    y: (args.grid.h / 2) - 50,
+    alignment_enum: 1,
+    text: "Blackjack! Você ganhou #{args.state.game.round.payout} créditos!"
   }
 end
 
@@ -163,21 +189,4 @@ def show_lost_message(args)
     alignment_enum: 1,
     text: 'Oops, passou de 21. Você perdeu.'
   }
-end
-
-def round_payout(args)
-  case args.state.round_score
-  when 0..17
-    0
-  when 18
-    50
-  when 19
-    100
-  when 20
-    150
-  when 21
-    200
-  else
-    0
-  end
 end
