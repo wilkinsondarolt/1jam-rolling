@@ -93,7 +93,7 @@ def draw_hud(args)
     x: 0,
     y: args.grid.h - 10,
     alignment_enum: 0,
-    text: "Pagamento: #{args.state.game.round.payout} créditos"
+    text: "Pagamento: #{args.state.game.payout} créditos"
   }
 
   args.outputs.labels << {
@@ -173,7 +173,7 @@ def show_finished_message(args)
     x: args.grid.w / 2,
     y: (args.grid.h / 2) - 50,
     alignment_enum: 1,
-    text: "Você ganhou #{args.state.game.round.payout} créditos!"
+    text: "Você ganhou #{args.state.game.payout} créditos!"
   }
 end
 
@@ -182,7 +182,7 @@ def show_blackjack_message(args)
     x: args.grid.w / 2,
     y: (args.grid.h / 2) - 50,
     alignment_enum: 1,
-    text: "Blackjack! Você ganhou #{args.state.game.round.payout} créditos!"
+    text: "Blackjack! Você ganhou #{args.state.game.payout} créditos!"
   }
 end
 

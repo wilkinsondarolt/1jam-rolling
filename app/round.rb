@@ -30,13 +30,13 @@ class Round
   end
 
   POSSIBLE_PAYOUTS = {
-    18 => 50,
-    19 => 100,
-    20 => 150,
-    21 => 200
+    18 => 0.5,
+    19 => 1.0,
+    20 => 1.5,
+    21 => 2.0
   }.freeze
 
-  def payout
+  def payout_rate
     POSSIBLE_PAYOUTS[score] || 0
   end
 
