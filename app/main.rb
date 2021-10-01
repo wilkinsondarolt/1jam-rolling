@@ -2,6 +2,7 @@ require 'app/button.rb'
 require 'app/dice.rb'
 require 'app/game.rb'
 require 'app/round.rb'
+require 'app/collision_box.rb'
 require 'app/sprite/static.rb'
 
 def start_game(args)
@@ -52,7 +53,9 @@ def build_buttons(args)
         y: y,
         h: 230,
         w: 180,
-        sprite_path: "sprites/d#{dice}_1.png",
+        collision_box: CollisionBox.new(x: x + 24, y: y + 78, h: 127, w: 130),
+        sprite_path: "sprites/d#{dice}_2.png",
+        mouse_over_sprite_path: "sprites/d#{dice}_1.png",
         on_click: proc { |state| state.game.round.roll_dice(dice) },
         visible: proc { true }
       )
