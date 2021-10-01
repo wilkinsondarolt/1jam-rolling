@@ -25,7 +25,7 @@ def tick(args)
 
   return if args.state.game.round.state == :ongoing
 
-  if args.state.game.credits.zero?
+  if args.state.game.finished?
     show_game_finished_message(args)
   else
     show_round_finished_message(args)
@@ -150,7 +150,7 @@ def handle_mouse_input(args)
       button.click(args)
     end
   elsif args.state.game.finished?
-    start_game(args)
+    args.state.game.start
   else
     args.state.game.start_round
   end

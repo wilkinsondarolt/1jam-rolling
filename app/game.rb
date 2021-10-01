@@ -4,13 +4,13 @@ class Game
   STARTING_CREDITS = 200
 
   def initialize
-    @credits = 0
-    @rounds = 0
-    @round = Round.new
+    start
   end
 
   def start
     @credits = STARTING_CREDITS
+    @round = Round.new
+    @rounds = 0
   end
 
   def start_round
@@ -34,7 +34,7 @@ class Game
   end
 
   def finished?
-    return false if round.finished?
+    return false unless round.finished?
 
     credits < bet
   end
