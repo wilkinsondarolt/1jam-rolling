@@ -2,6 +2,7 @@ require 'app/button.rb'
 require 'app/dice.rb'
 require 'app/game.rb'
 require 'app/round.rb'
+require 'app/sprite/static.rb'
 
 def start_game(args)
   args.state.buttons ||= build_buttons(args)
@@ -11,10 +12,11 @@ def start_game(args)
 end
 
 def tick(args)
+  args.state.buttons = build_buttons(args)
+
   start_game(args) if args.state.game.nil?
 
-  draw_debug_info(args)
-  draw_round_score(args)
+  draw_background(args)
   draw_buttons(args)
   draw_hud(args)
   handle_mouse_input(args)
@@ -33,83 +35,95 @@ end
 def build_buttons(args)
   buttons = []
   buttons << Button.new(
-    x: args.grid.w / 2 - 100,
-    y: args.grid.h / 2 - 100,
-    text: 'Parar',
+    x: 160,
+    y: 135,
+    h: 130,
+    w: 135,
     on_click: proc { |state| state.game.finish_round },
     visible: proc { |state| state.game.round.state == :ongoing }
   )
 
-  x = 60
-  [4, 6, 8, 10, 12, 20].each do |faces|
-    buttons << Button.new(
-      x: x,
-      y: 30,
-      h: 100,
-      w: 100,
-      text: "d#{faces}",
-      on_click: proc { |state| state.game.round.roll_dice(faces) },
-      visible: proc { true }
-    )
-
-    x += 210
+  y = 330
+  [[4, 6, 8], [10, 12, 20]].each do |dices|
+    x = 600
+    dices.each do |dice|
+      buttons << Button.new(
+        x: x,
+        y: y,
+        h: 230,
+        w: 180,
+        sprite_path: "sprites/d#{dice}_1.png",
+        on_click: proc { |state| state.game.round.roll_dice(dice) },
+        visible: proc { true }
+      )
+      x += 180
+    end
+    y -= 230
   end
 
   buttons
 end
 
-def draw_debug_info(args)
-  args.outputs.debug << {
-    x: args.grid.w / 2,
-    y: 0,
-    x2: args.grid.w / 2,
-    y2: args.grid.h
-  }
-
-  args.outputs.debug << {
-    x: 0,
-    y: args.grid.h / 2,
-    x2: args.grid.w,
-    y2: args.grid.h / 2
-  }
-
-  args.outputs.debug << {
-    x: 0,
-    y: args.grid.h - 90,
-    alignment_enum: 0,
-    text: "Round Status: #{args.state.game.round.state}"
-  }
-
-  args.outputs.labels << {
-    x: args.grid.w,
-    y: args.grid.h - 10,
-    alignment_enum: 2,
-    text: "Créditos: #{args.state.game.credits}"
-  }
-end
-
 def draw_hud(args)
+  args.outputs.sprites << Sprite::Static.render(
+    x: 110,
+    y: 280,
+    w: 480,
+    h: 350,
+    path: 'sprites/overlay.png'
+  )
+
+  args.outputs.sprites << Sprite::Static.render(
+    x: 130,
+    y: 80,
+    w: 450,
+    h: 220,
+    path: 'sprites/stop.png'
+  )
+
   args.outputs.labels << {
-    x: 0,
-    y: args.grid.h - 10,
-    alignment_enum: 0,
-    text: "Pagamento: #{args.state.game.payout} créditos"
+    x: 225,
+    y: 543,
+    text: "Creditos: #{format_number(args.state.game.credits, 5)}",
+    r: 4,
+    g: 196,
+    b: 217,
+    size_enum: 4,
+    font: 'fonts/LiquidCrystal-Normal.otf'
   }
 
   args.outputs.labels << {
-    x: 0,
-    y: args.grid.h - 50,
-    alignment_enum: 0,
-    text: "Aposta: #{args.state.game.bet} créditos"
+    x: 260,
+    y: 464,
+    text: "Pagamento: #{format_number(args.state.game.payout, 5)}",
+    r: 4,
+    g: 196,
+    b: 217,
+    size_enum: 4,
+    font: 'fonts/LiquidCrystal-Normal.otf'
   }
-end
 
-def draw_round_score(args)
   args.outputs.labels << {
-    x: args.grid.w / 2,
-    y: (args.grid.h / 2) + 10,
+    x: 290,
+    y: 388,
+    text: "Aposta: #{format_number(args.state.game.bet, 5)}",
+    r: 4,
+    g: 196,
+    b: 217,
+    size_enum: 4,
+    font: 'fonts/LiquidCrystal-Normal.otf'
+  }
+
+  args.outputs.labels << {
+    x: 410,
+    y: 190,
     alignment_enum: 1,
-    text: args.state.game.round.score
+    text: format_number(args.state.game.round.score, 2),
+    r: 4,
+    g: 196,
+    b: 217,
+    size_enum: 10,
+    font: 'fonts/LiquidCrystal-Normal.otf'
   }
 end
 
@@ -132,7 +146,17 @@ def handle_mouse_input(args)
 end
 
 def draw_buttons(args)
-  args.state.buttons.each { |button| button.render(args) }
+  args.outputs.sprites << args.state.buttons.map { |button| button.render(args) }
+end
+
+def draw_background(args)
+  args.outputs.sprites << Sprite::Static.render(
+    x: 0,
+    y: 0,
+    w: args.grid.w,
+    h: args.grid.h,
+    path: 'sprites/background.png'
+  )
 end
 
 def check_round_completion(args)
@@ -144,14 +168,24 @@ def show_game_finished_message(args)
     x: args.grid.w / 2,
     y: (args.grid.h / 2) - 30,
     alignment_enum: 1,
-    text: 'Você está sem créditos, que pena!'
+    text: 'Voce esta sem creditos, que pena!',
+    r: 4,
+    g: 196,
+    b: 217,
+    size_enum: 4,
+    font: 'fonts/LiquidCrystal-Normal.otf'
   }
 
   args.outputs.labels << {
     x: args.grid.w / 2,
     y: (args.grid.h / 2) - 80,
     alignment_enum: 1,
-    text: 'Clique para iniciar um novo jogo.'
+    text: 'Clique para iniciar um novo jogo.',
+    r: 4,
+    g: 196,
+    b: 217,
+    size_enum: 4,
+    font: 'fonts/LiquidCrystal-Normal.otf'
   }
 end
 
@@ -161,36 +195,60 @@ def show_round_finished_message(args)
   show_lost_message(args) if args.state.game.round.state == :lost
 
   args.outputs.labels << {
-    x: args.grid.w / 2,
-    y: (args.grid.h / 2) - 80,
+    x: 420,
+    y: 240,
     alignment_enum: 1,
-    text: 'Clique para jogar'
+    text: 'Clique para jogar',
+    r: 4,
+    g: 196,
+    b: 217,
+    size_enum: 5,
+    font: 'fonts/LiquidCrystal-Normal.otf'
   }
 end
 
 def show_finished_message(args)
   args.outputs.labels << {
     x: args.grid.w / 2,
-    y: (args.grid.h / 2) - 50,
+    y: 40,
     alignment_enum: 1,
-    text: "Você ganhou #{args.state.game.payout} créditos!"
+    text: "Voce ganhou #{args.state.game.payout} creditos!",
+    r: 4,
+    g: 196,
+    b: 217,
+    size_enum: 4,
+    font: 'fonts/LiquidCrystal-Normal.otf'
   }
 end
 
 def show_blackjack_message(args)
   args.outputs.labels << {
     x: args.grid.w / 2,
-    y: (args.grid.h / 2) - 50,
+    y: 40,
     alignment_enum: 1,
-    text: "Blackjack! Você ganhou #{args.state.game.payout} créditos!"
+    text: "Blackjack! Voce ganhou #{args.state.game.payout} creditos!",
+    r: 4,
+    g: 196,
+    b: 217,
+    size_enum: 4,
+    font: 'fonts/LiquidCrystal-Normal.otf'
   }
 end
 
 def show_lost_message(args)
   args.outputs.labels << {
     x: args.grid.w / 2,
-    y: (args.grid.h / 2) - 50,
+    y: 40,
     alignment_enum: 1,
-    text: 'Oops, passou de 21. Você perdeu.'
+    text: 'Oops, passou de 21. Voce perdeu.',
+    r: 4,
+    g: 196,
+    b: 217,
+    size_enum: 4,
+    font: 'fonts/LiquidCrystal-Normal.otf'
   }
+end
+
+def format_number(value, size)
+  value.to_s.rjust(size, '0')
 end

@@ -1,14 +1,14 @@
 class Button
-  attr_reader :x, :y, :h, :w, :text, :on_click, :visible
+  attr_reader :x, :y, :h, :w, :on_click, :visible, :sprite_path
 
-  def initialize(x:, y:, h: 50, w: 200, text:, on_click: nil, visible: nil)
+  def initialize(x:, y:, h: 50, w: 200, on_click: nil, visible: nil, sprite_path: nil)
     @x = x
     @y = y
     @h = h
     @w = w
-    @text = text
     @on_click = on_click
     @visible = visible
+    @sprite_path = sprite_path
   end
 
   def click(args)
@@ -27,15 +27,16 @@ class Button
   end
 
   def render(args)
+    return unless sprite_path
     return unless visible?(args)
 
-    args.outputs.borders << collision_box
-    args.outputs.labels << {
-      x: x + (w / 2),
-      y: y + (h / 2) + 10,
-      alignment_enum: 1,
-      text: text
-    }
+    Sprite::Static.render(
+      x: x,
+      y: y,
+      w: w,
+      h: h,
+      path: sprite_path
+    )
   end
 
   def visible?(args)
