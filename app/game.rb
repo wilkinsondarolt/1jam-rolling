@@ -26,7 +26,7 @@ class Game
   end
 
   def bet
-    50
+    (50 * difficulty_multiplier).to_i
   end
 
   def payout
@@ -37,5 +37,17 @@ class Game
     return false if round.finished?
 
     credits < bet
+  end
+
+  private
+
+  ROUNDS_TO_INCREATE_DIFFICULTY = 10
+  INCREASE_BET_PERCENTAGE = 1
+
+  def difficulty_multiplier
+    difficulty_level = (rounds / ROUNDS_TO_INCREATE_DIFFICULTY).to_i
+    additional_difficulty = difficulty_level * INCREASE_BET_PERCENTAGE
+
+    1 + additional_difficulty
   end
 end
