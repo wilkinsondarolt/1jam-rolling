@@ -5,6 +5,8 @@ require 'app/round.rb'
 require 'app/sprite/static.rb'
 
 def start_game(args)
+  play_gameplay_music(args)
+
   args.state.buttons ||= build_buttons(args)
   args.state.game = Game.new
 
@@ -12,8 +14,6 @@ def start_game(args)
 end
 
 def tick(args)
-  args.state.buttons = build_buttons(args)
-
   start_game(args) if args.state.game.nil?
 
   draw_background(args)
@@ -129,6 +129,8 @@ end
 
 def handle_mouse_input(args)
   return unless args.inputs.mouse.click
+
+  args.gtk.queue_sound('sounds/sfx_click.ogg')
 
   if args.state.game.round.state == :ongoing
     args.state.buttons.each do |button|
@@ -251,4 +253,15 @@ end
 
 def format_number(value, size)
   value.to_s.rjust(size, '0')
+end
+
+def play_gameplay_music(args)
+  args.audio[:music] ||= {
+    input: 'sounds/music_gameplay.ogg',
+    x: 0.0,
+    y: 0.0,
+    z: 0.0,
+    paused: false,
+    looping: true
+  }
 end
