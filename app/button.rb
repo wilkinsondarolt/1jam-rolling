@@ -28,7 +28,7 @@ class Button
       r: 255,
       g: 255,
       b: 255
-    }.border
+    }.border!
 
     return unless sprite_path
     return unless visible?(args)

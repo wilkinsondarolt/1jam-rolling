@@ -17,9 +17,8 @@ end
 def tick(args)
   start_game(args) if args.state.game.nil?
 
-  draw_background(args)
-  draw_buttons(args)
   draw_hud(args)
+  draw_buttons(args)
   handle_mouse_input(args)
 
   check_round_completion(args)
@@ -68,66 +67,73 @@ def build_buttons(args)
 end
 
 def draw_hud(args)
-  args.outputs.sprites << Sprite::Static.render(
-    x: 110,
-    y: 280,
-    w: 480,
-    h: 350,
-    path: 'sprites/overlay.png'
-  )
+  args.outputs.sprites << [
+    Sprite::Static.render(
+      x: 0,
+      y: 0,
+      w: args.grid.w,
+      h: args.grid.h,
+      path: 'sprites/background.png'
+    ),
+    Sprite::Static.render(
+      x: 110,
+      y: 280,
+      w: 480,
+      h: 350,
+      path: 'sprites/overlay.png'
+    ),
+    Sprite::Static.render(
+      x: 130,
+      y: 80,
+      w: 450,
+      h: 220,
+      path: 'sprites/stop.png'
+    )
+  ]
 
-  args.outputs.sprites << Sprite::Static.render(
-    x: 130,
-    y: 80,
-    w: 450,
-    h: 220,
-    path: 'sprites/stop.png'
-  )
-
-  args.outputs.labels << {
-    x: 225,
-    y: 543,
-    text: "Creditos: #{format_number(args.state.game.credits, 5)}",
-    r: 4,
-    g: 196,
-    b: 217,
-    size_enum: 4,
-    font: 'fonts/LiquidCrystal-Normal.otf'
-  }
-
-  args.outputs.labels << {
-    x: 260,
-    y: 464,
-    text: "Pagamento: #{format_number(args.state.game.payout, 5)}",
-    r: 4,
-    g: 196,
-    b: 217,
-    size_enum: 4,
-    font: 'fonts/LiquidCrystal-Normal.otf'
-  }
-
-  args.outputs.labels << {
-    x: 290,
-    y: 388,
-    text: "Aposta: #{format_number(args.state.game.bet, 5)}",
-    r: 4,
-    g: 196,
-    b: 217,
-    size_enum: 4,
-    font: 'fonts/LiquidCrystal-Normal.otf'
-  }
-
-  args.outputs.labels << {
-    x: 410,
-    y: 190,
-    alignment_enum: 1,
-    text: format_number(args.state.game.round.score, 2),
-    r: 4,
-    g: 196,
-    b: 217,
-    size_enum: 10,
-    font: 'fonts/LiquidCrystal-Normal.otf'
-  }
+  args.outputs.labels << [
+    {
+      x: 225,
+      y: 543,
+      text: "Creditos: #{format_number(args.state.game.credits, 5)}",
+      r: 4,
+      g: 196,
+      b: 217,
+      size_enum: 4,
+      font: 'fonts/LiquidCrystal-Normal.otf'
+    },
+    {
+      x: 260,
+      y: 464,
+      text: "Pagamento: #{format_number(args.state.game.payout, 5)}",
+      r: 4,
+      g: 196,
+      b: 217,
+      size_enum: 4,
+      font: 'fonts/LiquidCrystal-Normal.otf'
+    },
+    {
+      x: 290,
+      y: 388,
+      text: "Aposta: #{format_number(args.state.game.bet, 5)}",
+      r: 4,
+      g: 196,
+      b: 217,
+      size_enum: 4,
+      font: 'fonts/LiquidCrystal-Normal.otf'
+    },
+    {
+      x: 410,
+      y: 190,
+      alignment_enum: 1,
+      text: format_number(args.state.game.round.score, 2),
+      r: 4,
+      g: 196,
+      b: 217,
+      size_enum: 10,
+      font: 'fonts/LiquidCrystal-Normal.otf'
+    }
+  ]
 end
 
 def handle_mouse_input(args)
@@ -154,44 +160,35 @@ def draw_buttons(args)
   args.outputs.sprites << args.state.buttons.map { |button| button.render(args) }
 end
 
-def draw_background(args)
-  args.outputs.sprites << Sprite::Static.render(
-    x: 0,
-    y: 0,
-    w: args.grid.w,
-    h: args.grid.h,
-    path: 'sprites/background.png'
-  )
-end
-
 def check_round_completion(args)
   args.state.game.finish_round if args.state.game.round.auto_finish?
 end
 
 def show_game_finished_message(args)
-  args.outputs.labels << {
-    x: args.grid.w / 2,
-    y: (args.grid.h / 2) - 30,
-    alignment_enum: 1,
-    text: 'Voce esta sem creditos, que pena!',
-    r: 4,
-    g: 196,
-    b: 217,
-    size_enum: 4,
-    font: 'fonts/LiquidCrystal-Normal.otf'
-  }
-
-  args.outputs.labels << {
-    x: args.grid.w / 2,
-    y: (args.grid.h / 2) - 80,
-    alignment_enum: 1,
-    text: 'Clique para iniciar um novo jogo.',
-    r: 4,
-    g: 196,
-    b: 217,
-    size_enum: 4,
-    font: 'fonts/LiquidCrystal-Normal.otf'
-  }
+  args.outputs.labels << [
+    {
+      x: args.grid.w / 2,
+      y: (args.grid.h / 2) - 30,
+      alignment_enum: 1,
+      text: 'Voce esta sem creditos, que pena!',
+      r: 4,
+      g: 196,
+      b: 217,
+      size_enum: 4,
+      font: 'fonts/LiquidCrystal-Normal.otf'
+    },
+    {
+      x: args.grid.w / 2,
+      y: (args.grid.h / 2) - 80,
+      alignment_enum: 1,
+      text: 'Clique para iniciar um novo jogo.',
+      r: 4,
+      g: 196,
+      b: 217,
+      size_enum: 4,
+      font: 'fonts/LiquidCrystal-Normal.otf'
+    }
+  ]
 end
 
 def show_round_finished_message(args)
