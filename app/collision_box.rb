@@ -7,4 +7,8 @@ class CollisionBox
     @h = h
     @w = w
   end
+
+  def rect
+    { x: x, y: y, h: h, w: w }
+  end
 end

@@ -143,7 +143,7 @@ def handle_mouse_input(args)
 
   if args.state.game.round.state == :ongoing
     args.state.buttons.each do |button|
-      clicked = args.inputs.mouse.click.intersect_rect?(button.collision_box)
+      clicked = args.inputs.mouse.click.intersect_rect?(button.collision_box.rect)
 
       next unless clicked
 

@@ -20,16 +20,6 @@ class Button
   end
 
   def render(args)
-    args.outputs.debug << {
-      x: collision_box.x,
-      y: collision_box.y,
-      h: collision_box.h,
-      w: collision_box.w,
-      r: 255,
-      g: 255,
-      b: 255
-    }.border
-
     return unless sprite_path
     return unless visible?(args)
 
@@ -52,6 +42,6 @@ class Button
   end
 
   def mouse_over?(args)
-    args.inputs.mouse.position.intersect_rect?(collision_box)
+    args.inputs.mouse.position.intersect_rect?(collision_box.rect)
   end
 end
