@@ -1,5 +1,5 @@
 class Dice
   def self.roll(faces)
-    [*1..faces].sample
+    1 + rand(faces)
   end
 end
