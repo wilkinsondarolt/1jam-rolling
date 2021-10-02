@@ -25,9 +25,9 @@ def tick(args)
 
   check_round_completion(args)
 
-  return if args.state.game.round.state == :ongoing
-
-  if args.state.game.finished?
+  if args.state.game.round.state == :ongoing
+    draw_game_name(args)
+  elsif args.state.game.finished?
     show_game_finished_message(args)
   else
     show_round_finished_message(args)
@@ -120,9 +120,20 @@ def draw_hud(args)
     },
     {
       x: 410,
+      y: 240,
+      alignment_enum: 1,
+      text: "Pontos: #{format_number(args.state.game.round.score, 2)}",
+      r: 4,
+      g: 196,
+      b: 217,
+      size_enum: 10,
+      font: 'fonts/LiquidCrystal-Normal.otf'
+    },
+    {
+      x: 410,
       y: 190,
       alignment_enum: 1,
-      text: format_number(args.state.game.round.score, 2),
+      text: "Turno: #{format_number(args.state.game.rounds, 3)}",
       r: 4,
       g: 196,
       b: 217,
@@ -204,13 +215,13 @@ def show_round_finished_message(args)
   show_lost_message(args) if args.state.game.round.state == :lost
 
   args.outputs.labels << {
-    x: 420,
-    y: 240,
+    x: args.grid.w / 2 + 170,
+    y: args.grid.h - 60,
     alignment_enum: 1,
-    text: 'Clique para jogar',
-    r: 4,
-    g: 196,
-    b: 217,
+    text: 'Clique para iniciar a rodada',
+    r: 255,
+    g: 255,
+    b: 255,
     size_enum: 5,
     font: 'fonts/LiquidCrystal-Normal.otf'
   }
@@ -256,6 +267,16 @@ def show_lost_message(args)
     size_enum: 4,
     font: 'fonts/LiquidCrystal-Normal.otf'
   }
+end
+
+def draw_game_name(args)
+  args.outputs.sprites << Sprite::Static.render(
+    x: args.grid.w / 2 - 60,
+    y: args.grid.h - 120,
+    w: 450,
+    h: 100,
+    path: 'sprites/game_title.png'
+  )
 end
 
 def format_number(value, size)
