@@ -1,4 +1,6 @@
-require 'app/button.rb'
+require 'app/buttons/button.rb'
+require 'app/buttons/finish_round.rb'
+require 'app/buttons/roll_dice.rb'
 require 'app/dice.rb'
 require 'app/game.rb'
 require 'app/round.rb'
@@ -34,29 +36,23 @@ end
 
 def build_buttons(args)
   buttons = []
-  buttons << Button.new(
+  buttons << Buttons::FinishRound.new(
     x: 160,
     y: 135,
     h: 130,
-    w: 135,
-    on_click: proc { |state| state.game.finish_round },
-    visible: proc { |state| state.game.round.state == :ongoing }
+    w: 135
   )
 
   y = 330
   [[4, 6, 8], [10, 12, 20]].each do |dices|
     x = 600
     dices.each do |dice|
-      buttons << Button.new(
+      buttons << Buttons::RollDice.new(
         x: x,
         y: y,
         h: 230,
         w: 180,
-        collision_box: CollisionBox.new(x: x + 24, y: y + 78, h: 127, w: 130),
-        sprite_path: "sprites/d#{dice}_2.png",
-        mouse_over_sprite_path: "sprites/d#{dice}_1.png",
-        on_click: proc { |state| state.game.round.roll_dice(dice) },
-        visible: proc { true }
+        dice: dice
       )
       x += 180
     end
@@ -139,7 +135,7 @@ end
 def handle_mouse_input(args)
   return unless args.inputs.mouse.click
 
-  args.gtk.queue_sound('sounds/sfx_click.ogg')
+  play_sound(args, 'sounds/sfx_click.ogg')
 
   if args.state.game.round.state == :ongoing
     args.state.buttons.each do |button|
@@ -161,7 +157,18 @@ def draw_buttons(args)
 end
 
 def check_round_completion(args)
-  args.state.game.finish_round if args.state.game.round.auto_finish?
+  return unless args.state.game.round.auto_finish?
+
+  args.state.game.finish_round
+
+  sound_file = case args.state.game.round.state
+               when :blackjack
+                 'sfx_won'
+               when :lost
+                 'sfx_lost'
+               end
+
+  play_sound(args, "sounds/#{sound_file}.ogg")
 end
 
 def show_game_finished_message(args)
@@ -264,4 +271,8 @@ def play_gameplay_music(args)
     paused: false,
     looping: true
   }
+end
+
+def play_sound(args, sound_file)
+  args.gtk.queue_sound(sound_file)
 end
