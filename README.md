@@ -33,7 +33,7 @@ Payment is based on how close you are to 21 and your bet.
 
 Example: If you bet 50 and stop at 20, you get 75 credits.
 
-# Setup
+## Setup
 **Important** This game was built using [DragonRuby](https://dragonruby.itch.io/) and you need a copy of it to run this game.
 
 Clone the game locally on you DragonRuby folder
@@ -42,9 +42,13 @@ Clone the game locally on you DragonRuby folder
 git clone https://github.com/wilkinsondarolt/1jam-rolling.git
 ```
 
-# Running the game
+##  Running the game
 Use the dragon ruby binary to run the game
 
 ```bash
 ./dragonruby games/1jamrolling
 ```
+
+## Credits
+Art and UI: [Nayara Lara](https://twitter.com/nayara_lara)
+SFX and Music: [Euler Moisés](https://twitter.com/EulerMoises)
